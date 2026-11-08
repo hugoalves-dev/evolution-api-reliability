@@ -119,7 +119,7 @@ export class RabbitmqController extends EventController implements EventControll
             this.logger.error({
               local: 'RabbitmqController.connect',
               message: 'Failed to connect to RabbitMQ',
-              error: error.message || error,
+              error: error?.constructor?.name || 'Error',
             });
             reject(error);
             return;
@@ -147,7 +147,7 @@ export class RabbitmqController extends EventController implements EventControll
               this.logger.error({
                 local: 'RabbitmqController.createChannel',
                 message: 'Failed to create RabbitMQ channel',
-                error: channelError.message || channelError,
+                error: channelError?.constructor?.name || 'Error',
               });
               reject(channelError);
               return;
@@ -192,7 +192,7 @@ export class RabbitmqController extends EventController implements EventControll
           this.logger.error({
             local: 'RabbitmqController.init',
             message: 'Failed to initialize AMQP',
-            error: error.message || error,
+            error: error?.constructor?.name || 'Error',
           });
           this.scheduleReconnect();
           throw error;
@@ -248,7 +248,7 @@ export class RabbitmqController extends EventController implements EventControll
         this.logger.error({
           local: 'RabbitmqController.scheduleReconnect',
           message: `Reconnection attempt ${this.reconnectAttempts} failed`,
-          error: error.message || error,
+          error: error?.constructor?.name || 'Error',
         });
         this.isReconnecting = false;
         this.scheduleReconnect();
@@ -338,9 +338,9 @@ export class RabbitmqController extends EventController implements EventControll
         this.logger.error({
           local: 'RabbitmqController.initGlobalQueues',
           message: `Failed to initialize global queue for event ${event}`,
-          error: error.message || error,
+          error: error?.constructor?.name || 'Error',
         });
-        this.handleConnectionLoss();
+        this.handleConnectionLoss(this.amqpConnection, this.amqpChannel);
         break;
       }
     }
