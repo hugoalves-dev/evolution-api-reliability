@@ -282,7 +282,9 @@ export class RabbitmqController extends EventController implements EventControll
     const local = await this.get(eventData.instanceName);
     const deliveries = planRabbitDeliveries(eventData, {
       localEnabled: Boolean(local?.enabled),
-      localEvents: Array.isArray(local?.events) ? local.events : [],
+      localEvents: Array.isArray(local?.events)
+        ? local.events.filter((event): event is string => typeof event === 'string')
+        : [],
       globalEnabled: config.GLOBAL_ENABLED,
       globalExternalQueue: config.GLOBAL_EXTERNAL_QUEUE,
       globalEvents: config.EVENTS,
