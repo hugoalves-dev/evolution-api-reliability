@@ -7,6 +7,13 @@ type ReturnState = {
   onReturn: (message: Message) => void;
 };
 
+export class RabbitmqConfirmTimeoutError extends Error {
+  constructor() {
+    super('RabbitMQ publisher confirmation timed out');
+    this.name = 'RabbitmqConfirmTimeoutError';
+  }
+}
+
 const returns = new WeakMap<ConfirmChannel, ReturnState>();
 
 function trackReturn(channel: ConfirmChannel, correlationId: string): { returned: boolean; cleanup: () => void } {
@@ -68,7 +75,7 @@ export function publishConfirmed(
       else if (tracked.returned) reject(new Error('RabbitMQ publication was unroutable'));
       else resolve();
     };
-    const timer = setTimeout(() => finish(new Error('RabbitMQ publisher confirmation timed out')), confirmTimeoutMs);
+    const timer = setTimeout(() => finish(new RabbitmqConfirmTimeoutError()), confirmTimeoutMs);
     try {
       channel.publish(
         exchange,

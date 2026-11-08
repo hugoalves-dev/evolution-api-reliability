@@ -14,3 +14,16 @@ test('does not expose the configured API key in the RabbitMQ event envelope', ()
   assert.equal(message.request, 'safe');
   assert.equal(message.instance, 'watcher');
 });
+
+test('removes known credential fields from nested broker payloads', () => {
+  const event = {
+    instanceName: 'watcher', event: 'messages.upsert',
+    data: { key: { id: '42' }, token: 'private-token', nested: { apiKey: 'private-key', text: 'hello' } },
+    serverUrl: 'https://example.invalid', dateTime: '2026-11-07T00:00:00Z', sender: 'sender',
+  };
+  const json = JSON.stringify(rabbitEventEnvelope(event));
+  assert.equal(json.includes('private-token'), false);
+  assert.equal(json.includes('private-key'), false);
+  assert.equal(JSON.parse(json).data.key.id, '42');
+  assert.equal(JSON.parse(json).data.nested.text, 'hello');
+});

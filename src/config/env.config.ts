@@ -97,8 +97,10 @@ export type Rabbitmq = {
   ENABLED: boolean;
   URI: string;
   FRAME_MAX: number;
+  CONNECT_TIMEOUT_MS: number;
   EXCHANGE_NAME: string;
   GLOBAL_ENABLED: boolean;
+  GLOBAL_EXTERNAL_QUEUE: boolean;
   EVENTS: EventsRabbitmq;
   PREFIX_KEY?: string;
 };
@@ -504,10 +506,15 @@ export class ConfigService {
       RABBITMQ: {
         ENABLED: process.env?.RABBITMQ_ENABLED === 'true',
         GLOBAL_ENABLED: process.env?.RABBITMQ_GLOBAL_ENABLED === 'true',
+        GLOBAL_EXTERNAL_QUEUE: process.env?.RABBITMQ_GLOBAL_EXTERNAL_QUEUE === 'true',
         PREFIX_KEY: process.env?.RABBITMQ_PREFIX_KEY,
         EXCHANGE_NAME: process.env?.RABBITMQ_EXCHANGE_NAME || 'evolution_exchange',
         URI: process.env.RABBITMQ_URI || '',
         FRAME_MAX: Number.parseInt(process.env.RABBITMQ_FRAME_MAX) || 8192,
+        CONNECT_TIMEOUT_MS: Math.min(
+          60_000,
+          Math.max(1000, Number.parseInt(process.env.RABBITMQ_CONNECT_TIMEOUT_MS) || 10_000),
+        ),
         EVENTS: {
           APPLICATION_STARTUP: process.env?.RABBITMQ_EVENTS_APPLICATION_STARTUP === 'true',
           INSTANCE_CREATE: process.env?.RABBITMQ_EVENTS_INSTANCE_CREATE === 'true',

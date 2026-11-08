@@ -5,7 +5,7 @@ import { ChannelRouter } from '@api/integrations/channel/channel.router';
 import { ChatbotRouter } from '@api/integrations/chatbot/chatbot.router';
 import { EventRouter } from '@api/integrations/event/event.router';
 import { StorageRouter } from '@api/integrations/storage/storage.router';
-import { waMonitor } from '@api/server.module';
+import { eventManager, waMonitor } from '@api/server.module';
 import { configService, Database, Facebook } from '@config/env.config';
 import { fetchLatestWaWebVersion } from '@utils/fetchLatestWaWebVersion';
 import { NextFunction, Request, Response, Router } from 'express';
@@ -154,6 +154,20 @@ if (metricsConfig.ENABLED) {
           integration,
         )}",state="${escapeLabel(state)}"} 1`,
       );
+    }
+
+    if (configService.get('RABBITMQ').ENABLED) {
+      lines.push('# HELP evolution_rabbitmq_spool_events Number of durable producer events by status');
+      lines.push('# TYPE evolution_rabbitmq_spool_events gauge');
+      try {
+        const counts = await eventManager.rabbitmq.spoolCounts();
+        for (const status of ['PENDING', 'PROCESSING', 'DEAD'] as const) {
+          lines.push(`evolution_rabbitmq_spool_events{status="${status.toLowerCase()}"} ${counts?.[status] ?? -1}`);
+        }
+      } catch {
+        for (const status of ['pending', 'processing', 'dead'])
+          lines.push(`evolution_rabbitmq_spool_events{status="${status}"} -1`);
+      }
     }
 
     res.send(lines.join('\n') + '\n');

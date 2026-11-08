@@ -755,3 +755,24 @@ model EvoaiSetting {
   Instance        Instance  @relation(fields: [instanceId], references: [id], onDelete: Cascade)
   instanceId      String    @unique
 }
+
+// Durable producer handoff; payload is removed on confirmed publication or expiry.
+model RabbitmqDelivery {
+  id          String    @id @db.VarChar(36)
+  instance    String    @db.VarChar(255)
+  eventId     String    @db.VarChar(255)
+  exchange    String    @db.VarChar(255)
+  queue       String    @db.VarChar(255)
+  route       String    @db.VarChar(255)
+  payload     String    @db.LongText
+  status      String    @db.VarChar(16)
+  attempts    Int       @default(0)
+  availableAt DateTime  @db.DateTime(3)
+  leaseUntil  DateTime? @db.DateTime(3)
+  leaseToken  String?   @db.VarChar(36)
+  createdAt   DateTime  @db.DateTime(3)
+  expiresAt   DateTime  @db.DateTime(3)
+
+  @@index([status, availableAt, leaseUntil], map: "RabbitmqDelivery_due_idx")
+  @@index([expiresAt], map: "RabbitmqDelivery_expiry_idx")
+}
